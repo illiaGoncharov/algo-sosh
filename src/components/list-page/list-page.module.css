@@ -1,0 +1,32 @@
+.input_container {
+  max-width: 840px;
+  margin: 0 auto;
+  padding-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  column-gap: 12px;
+}
+
+.circle_container {
+  margin: 0 auto;
+  padding-left: 0;
+  padding-top: 120px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  list-style-type: none;
+}
+
+.item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.input {
+  max-width: 204px;
+}
+
+.button {
+  width: 362px;
+}
