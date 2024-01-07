@@ -1,5 +1,6 @@
+// Перечисление для представления состояний элементов
 export enum ElementStates {
   Default = "default",
-  Changing = "changing",
   Modified = "modified",
+  Changing = "changing"
 }
