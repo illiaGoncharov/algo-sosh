@@ -8,7 +8,7 @@ import { ElementStates } from "../../types/element-states";
 import { TString } from "../../types/common-types";
 import { SHORT_DELAY_IN_MS } from "../../constants/delays";
 import { delayPromise } from "../../utils/utils";
-import { useCustomForm } from "../../hooks/hooks";
+import { useCustomForm, useIsMounted } from "../../hooks/hooks";
 import styles from "./queue-page.module.css"
 
 export const QueuePage: React.FC = () => { 
@@ -19,6 +19,8 @@ export const QueuePage: React.FC = () => {
 
   // Хук для управления формой
   const { values, handleInputChange, setValues } = useCustomForm({ value: "" })
+  // Хук для отслеживания состояния монтирования компонента
+  const isMounted = useIsMounted();
   
   // Очередь и массив элементов для отображения
   const [queue, setQueue] = useState(new Queue<TString>(7));
@@ -29,42 +31,45 @@ export const QueuePage: React.FC = () => {
   // Обработчик для кнопок
   const handleVisualizationClick = async (text: string, e: SyntheticEvent) => {
     e.preventDefault();
-    // Если текст кнопки - "..."
-    if (values.value !== "" && text === "Добавить") {
-      // Добавление в очередь с анимацией 
-      setAddLoader(true); // Установка состояния загрузки 
-      // Добавление в очередь с состоянием изменения
-      queue.enqueue({ value: values.value, state: ElementStates.Changing });
-      setQueue(queue); // Обновление состояния очереди
-      setArr([...array]); // Обновление состояния массива
-      await delayPromise(SHORT_DELAY_IN_MS);  // Задержка для анимации
-      // Установка состояния хвоста очереди в состояние по умолчанию
-      queue.getTail()!.state = ElementStates.Default;
-      // Сброс
-      setValues({ value: "" });
-      setArr([...array]);
-      setAddLoader(false)
-    } else if (text === "Удалить") {
-      // Удаление из очереди с анимацией
-      setRemoveLoader(true);
-      // Установка состояния верхнего элемента очереди в состояние изменения
-      queue.peek()!.state = ElementStates.Changing;
-      setQueue(queue); // Обновление состояния очереди
-      setArr([...array]); // Обновление состояния массива
-      await delayPromise(SHORT_DELAY_IN_MS);
-      queue.dequeue(); // Удаление из очереди
-      setQueue(queue);
-      await delayPromise(SHORT_DELAY_IN_MS);
-      setArr([...array]);
-      setRemoveLoader(false)
-    } else if (text === "Очистить") {
-      // Очистка очереди с анимацией  
-      setClearLoader(true) // Установка состояния загрузки для анимации очистки
-      queue.clear(); // Очистка очереди
-      setQueue(queue); // Обновление состояния очереди 
-      array = initialArray; // Восстановление исходного массива
-      setArr([...array]);
-      setClearLoader(false)
+    // Проверка, что компонент все еще смонтирован перед обновлением состояния
+    if (isMounted.current) {
+      // Если текст кнопки - "..."
+      if (values.value !== "" && text === "Добавить") {
+        // Добавление в очередь с анимацией 
+        setAddLoader(true); // Установка состояния загрузки 
+        // Добавление в очередь с состоянием изменения
+        queue.enqueue({ value: values.value, state: ElementStates.Changing });
+        setQueue(queue); // Обновление состояния очереди
+        setArr([...array]); // Обновление состояния массива
+        await delayPromise(SHORT_DELAY_IN_MS);  // Задержка для анимации
+        // Установка состояния хвоста очереди в состояние по умолчанию
+        queue.getTail()!.state = ElementStates.Default;
+        // Сброс
+        setValues({ value: "" });
+        setArr([...array]);
+        setAddLoader(false)
+      } else if (text === "Удалить") {
+        // Удаление из очереди с анимацией
+        setRemoveLoader(true);
+        // Установка состояния верхнего элемента очереди в состояние изменения
+        queue.peek()!.state = ElementStates.Changing;
+        setQueue(queue); // Обновление состояния очереди
+        setArr([...array]); // Обновление состояния массива
+        await delayPromise(SHORT_DELAY_IN_MS);
+        queue.dequeue(); // Удаление из очереди
+        setQueue(queue);
+        await delayPromise(SHORT_DELAY_IN_MS);
+        setArr([...array]);
+        setRemoveLoader(false)
+      } else if (text === "Очистить") {
+        // Очистка очереди с анимацией  
+        setClearLoader(true) // Установка состояния загрузки для анимации очистки
+        queue.clear(); // Очистка очереди
+        setQueue(queue); // Обновление состояния очереди 
+        array = initialArray; // Восстановление исходного массива
+        setArr([...array]);
+        setClearLoader(false)
+      }
     }
   };
   

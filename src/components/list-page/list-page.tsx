@@ -6,7 +6,7 @@ import { Circle } from "../ui/circle/circle";
 import { SolutionLayout } from "../ui/solution-layout/solution-layout";
 import { TString } from "../../types/common-types";
 import { ElementStates } from "../../types/element-states";
-import { useCustomForm } from "../../hooks/hooks";
+import { useCustomForm, useIsMounted } from "../../hooks/hooks";
 import { delayPromise } from "../../utils/utils";
 import { LinkedList } from "./list-algorithm";
 import { SHORT_DELAY_IN_MS } from "../../constants/delays";
@@ -15,6 +15,11 @@ import styles from "./list-page.module.css"
 export const ListPage: React.FC = () => {
   // Состояние для текущего индекса
   const [currentIndex, setIndex] = useState<{ value: string; }>({ value: "" });
+  
+  // Хук для отслеживания состояния монтирования компонента
+  const isMounted = useIsMounted();
+  // Хук формы для управления вводом данных
+  const { values, handleInputChange, setValues } = useCustomForm({ value: "" });
 
   // Начальный массив для инициализации связанного списка
   const initialArr: TString[] = [
@@ -34,160 +39,38 @@ export const ListPage: React.FC = () => {
   const [head, setHead] = useState<string | React.ReactElement<any, string | React.JSXElementConstructor<any>>>("");
   const [tail, setTail] = useState<string | React.ReactElement<any, string | React.JSXElementConstructor<any>>>("");
   
-  // Хук формы для управления вводом данных
-  const { values, handleInputChange, setValues } = useCustomForm({ value: "" });
-  
   // Получаем числовое значение текущего индекса
   let indexNum = Number(currentIndex.value);
-  // Обработчик изменения ввода индекс
   
+  // Обработчик изменения ввода индекс
   const changeInputIndex = (event: SyntheticEvent<HTMLInputElement>) => {
     const { value, name } = event.target as HTMLInputElement;
     setIndex({ ...currentIndex, [name]: value });
   };
+
+  // Обработчик формы
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  }
   
   // Асинхронная функция для добавления элемента в head списка
   const addHeadOnClick = async () => {
-    // Проверка на максимальное количество элементов в списке
-    if (list.toArray().length < 6) {
-      // Установка флага загрузки
-      setLoader(true);
-      // Установка текущего действия
-      setCurrent("Добавить в head");
-      // Задержка для анимации
-      await delayPromise(SHORT_DELAY_IN_MS);
-      // Добавление элемента в в начало списка - head
-      list.prepend({ value: values.value, state: ElementStates.Modified });
-      // Задержка для анимации
-      await delayPromise(SHORT_DELAY_IN_MS);
-      // Установка текста для отображения текущего действия
-      setText("Добавить в head");
-      // Отображение изменений в head
-      setHead(
-        <Circle
-          letter={values.value}
-          state={ElementStates.Changing}
-          isSmall={true}
-        />
-      );
-      // Обновление состояния списка
-      setList(list);
-      // Задержка для анимации  
-      await delayPromise(SHORT_DELAY_IN_MS);
-      // Обновление массива, содержащего значения списка
-      setArr([...list.toArray()]);
-      // Установка текста для отображения head
-      setHead("head");
-      // Задержка для анимации
-      await delayPromise(SHORT_DELAY_IN_MS);
-      // Возврат состояния элемента в Default
-      list.toArray()[0].state = ElementStates.Default;
-      // Обновление состояния списка и массива
-      setList(list);
-      setArr([...list.toArray()]);
-      // Сброс текущего действия и флага загрузки  
-      setCurrent("");
-      setLoader(false);
-      // Сброс значения ввода
-      setValues({ value: "" });
-    }
-  };
-  
-  // Асинхронная функция для удаления элемента из head списка
-  const deleteHeadOnClick = async () => {
-    setLoader(true);
-    setCurrent("Удалить из head");
-    setText("Удалить из head");
-    // Отображение изменений в tail перед удалением
-    setTail(
-      <Circle
-        letter={list.toArray()[0].value}
-        state={ElementStates.Changing}
-        isSmall={true}
-      />
-    );
-    list.toArray()[0].value = "";
-    await delayPromise(SHORT_DELAY_IN_MS);
-    // Удаление элемента из head
-    list.deleteHead();
-    setList(list);
-    await delayPromise(SHORT_DELAY_IN_MS);
-    setArr([...list.toArray()]);
-    setTail("");
-    setText("");
-    setCurrent("");
-    setLoader(false);
-  };
- 
-  // Асинхронная функция для добавления элемента в tail списка
-  const addTailOnClick = async () => {
-    // Проверка на максимальное количество элементов в списке
-    if (list.toArray().length < 6) {
-      setLoader(true);
-      setCurrent("Добавить в tail");
-      await delayPromise(SHORT_DELAY_IN_MS);
-      // Добавление элемента в tail
-      list.append({ value: values.value, state: ElementStates.Modified });
-      await delayPromise(SHORT_DELAY_IN_MS);
-      setText("Добавить в tail");
-      // Отображение изменений в head
-      setHead(
-        <Circle
-          letter={values.value}
-          state={ElementStates.Changing}
-          isSmall={true}
-        />
-      );
-      setList(list);
-      await delayPromise(SHORT_DELAY_IN_MS);
-      setArr([...list.toArray()]);
-      setHead("");
-      await delayPromise(SHORT_DELAY_IN_MS);
-      // Возврат состояния элемента в Default
-      list.toArray()[arr.length].state = ElementStates.Default;
-      setList(list);
-      setArr([...list.toArray()]);
-      setCurrent("");
-      setValues({ value: "" });
-      setLoader(false);
-    }
-  };
-  
-  // Асинхронная функция для удаления элемента из tail списка
-  const deleteTailOnClick = async () => {
-    setLoader(true);
-    setCurrent("Удалить из tail");
-    setText("Удалить из tail");
-    // Отображение изменений в tail перед удалением
-    setTail(
-      <Circle
-        letter={list.toArray()[arr.length - 1].value}
-        state={ElementStates.Changing}
-        isSmall={true}
-      />
-    );
-    // Удаление элемента из tail
-    list.toArray()[arr.length - 1].value = "";
-    await delayPromise(SHORT_DELAY_IN_MS);
-    list.deleteTail();
-    setList(list);
-    setArr([...list.toArray()]);
-    setTail("tail");
-    setText("");
-    setCurrent("");
-    setLoader(false);
-  };
-  
-  // Асинхронная функция для добавления элемента по индексу
-  const addIndexOnClick = async () => {
-    // Проверка на максимальное количество элементов в списке
-    if (list.toArray().length < 6) {
-      setLoader(true);
-      setCurrent("Добавить по индексу");
-      setText("Добавить по индексу");
-      for (let i = 0; i <= indexNum; i++) {
-        setIndex({ value: String(i) });
+    if (isMounted.current) {
+      // Проверка на максимальное количество элементов в списке
+      if (list.toArray().length < 6) {
+        // Установка флага загрузки
+        setLoader(true);
+        // Установка текущего действия
+        setCurrent("Добавить в head");
+        
+        // Задержка для анимации
         await delayPromise(SHORT_DELAY_IN_MS);
+        // Добавление элемента в в начало списка - head
+        list.prepend({ value: values.value, state: ElementStates.Modified });
+        // Задержка для анимации
+        await delayPromise(SHORT_DELAY_IN_MS);
+        // Установка текста для отображения текущего действия
+        setText("Добавить в head");
         // Отображение изменений в head
         setHead(
           <Circle
@@ -196,6 +79,199 @@ export const ListPage: React.FC = () => {
             isSmall={true}
           />
         );
+        // Обновление состояния списка
+        setList(list);
+        // Задержка для анимации  
+        await delayPromise(SHORT_DELAY_IN_MS);
+        // Обновление массива, содержащего значения списка
+        setArr([...list.toArray()]);
+        // Установка текста для отображения head
+        setHead("head");
+        // Задержка для анимации
+        await delayPromise(SHORT_DELAY_IN_MS);
+        // Возврат состояния элемента в Default
+        list.toArray()[0].state = ElementStates.Default;
+        // Обновление состояния списка и массива
+        setList(list);
+        setArr([...list.toArray()]);
+        // Сброс текущего действия и флага загрузки  
+        setCurrent("");
+        setLoader(false);
+        // Сброс значения ввода
+        setValues({ value: "" });
+      }
+    }
+  };
+  
+  // Асинхронная функция для удаления элемента из head списка
+  const deleteHeadOnClick = async () => {
+    // Проверка, что компонент еще монтирован 
+    if (isMounted.current) {
+      // Установка флага загрузки
+      setLoader(true);
+      setCurrent("Удалить из head");
+      setText("Удалить из head");
+
+      // Отображение изменений в tail перед удалением
+      setTail(
+        <Circle
+          letter={list.toArray()[0].value}
+          state={ElementStates.Changing}
+          isSmall={true}
+        />
+      );
+
+      // Установка значения элемента в пустую строку
+      list.toArray()[0].value = "";
+      
+      // Задержка для анимации
+      await delayPromise(SHORT_DELAY_IN_MS);
+
+      // Удаление элемента из head
+      list.deleteHead();
+      setList(list);
+
+      // Задержка для анимации
+      await delayPromise(SHORT_DELAY_IN_MS);
+
+      // Обновление массива, содержащего значения списка
+      setArr([...list.toArray()]);
+
+      // Сброс
+      setTail("");
+      setText("");
+      setCurrent("");
+      setLoader(false);
+    }
+  };
+ 
+  // Асинхронная функция для добавления элемента в tail списка
+  const addTailOnClick = async () => {
+    // Проверка, что компонент еще монтирован
+    if (isMounted.current) {
+      // Проверка на максимальное количество элементов в списке
+      if (list.toArray().length < 6) {
+        setLoader(true);
+        setCurrent("Добавить в tail");
+        await delayPromise(SHORT_DELAY_IN_MS);
+
+        // Добавление элемента в tail
+        list.append({ value: values.value, state: ElementStates.Modified });
+        await delayPromise(SHORT_DELAY_IN_MS);
+        setText("Добавить в tail");
+
+        // Отображение изменений в head
+        setHead(
+          <Circle
+            letter={values.value}
+            state={ElementStates.Changing}
+            isSmall={true}
+          />
+        );
+
+        setList(list);
+        await delayPromise(SHORT_DELAY_IN_MS);
+        setArr([...list.toArray()]);
+        setHead("");
+        await delayPromise(SHORT_DELAY_IN_MS);
+        
+        // Возврат состояния элемента в Default
+        list.toArray()[arr.length].state = ElementStates.Default;
+
+        setList(list);
+        setArr([...list.toArray()]);
+        setCurrent("");
+        setValues({ value: "" });
+        setLoader(false);
+      }
+    }
+  };
+  
+  // Асинхронная функция для удаления элемента из tail списка
+  const deleteTailOnClick = async () => {
+    if (isMounted.current) {
+      setLoader(true);
+      setCurrent("Удалить из tail");
+      setText("Удалить из tail");
+      // Отображение изменений в tail перед удалением
+      setTail(
+        <Circle
+          letter={list.toArray()[arr.length - 1].value}
+          state={ElementStates.Changing}
+          isSmall={true}
+        />
+      );
+      // Удаление элемента из tail
+      list.toArray()[arr.length - 1].value = "";
+      await delayPromise(SHORT_DELAY_IN_MS);
+      list.deleteTail();
+      setList(list);
+      setArr([...list.toArray()]);
+      setTail("tail");
+      setText("");
+      setCurrent("");
+      setLoader(false);
+    }
+  };
+  
+  // Асинхронная функция для добавления элемента по индексу
+  const addIndexOnClick = async () => {
+    if (isMounted.current) {
+      // Проверка на максимальное количество элементов в списке
+      if (list.toArray().length < 6) {
+        setLoader(true);
+        setCurrent("Добавить по индексу");
+        setText("Добавить по индексу");
+        for (let i = 0; i <= indexNum; i++) {
+          setIndex({ value: String(i) });
+          await delayPromise(SHORT_DELAY_IN_MS);
+          // Отображение изменений в head
+          setHead(
+            <Circle
+              letter={values.value}
+              state={ElementStates.Changing}
+              isSmall={true}
+            />
+          );
+          if (i < indexNum) {
+            await delayPromise(SHORT_DELAY_IN_MS);
+            list.toArray()[i].state = ElementStates.Changing;
+            setList(list);
+            setArr([...list.toArray()]);
+            await delayPromise(SHORT_DELAY_IN_MS);
+          }
+        }
+        // Добавление элемента по индексу
+        list.addByIndex({ value: values.value, state: ElementStates.Modified }, indexNum);
+        setList(list);
+        setArr([...list.toArray()]);
+        await delayPromise(SHORT_DELAY_IN_MS);
+        // Возврат состояния элемента в Default
+        const arr = list.toArray().map((value) => ({
+          ...value,
+          color: ElementStates.Default,
+        })) as TString[];
+        setList(list);
+        setArr([...arr]);
+        setHead("");
+        setCurrent("");
+        setText("");
+        setLoader(false);
+        setValues({ value: "" });
+        setIndex({ value: "" });
+      }
+    }
+  };
+ 
+  // Асинхронная функция для удаления элемента по индексу
+  const deleteIndexOnClick = async () => {
+    if (isMounted.current) {
+      setLoader(true);
+      setCurrent("Удалить по индексу");
+      setText("Удалить по индексу");
+      for (let i = 0; i <= indexNum; i++) {
+        setIndex({ value: String(i) });
+        await delayPromise(SHORT_DELAY_IN_MS);
         if (i < indexNum) {
           await delayPromise(SHORT_DELAY_IN_MS);
           list.toArray()[i].state = ElementStates.Changing;
@@ -203,76 +279,40 @@ export const ListPage: React.FC = () => {
           setArr([...list.toArray()]);
           await delayPromise(SHORT_DELAY_IN_MS);
         }
+        if (i === indexNum) {
+          // Отображение изменений в tail перед удалением
+          setTail(
+            <Circle
+              letter={list.toArray()[indexNum].value}
+              state={ElementStates.Changing}
+              isSmall={true}
+            />
+          );
+          setList(list);
+          setArr([...list.toArray()]);
+          list.toArray()[indexNum].value = "";
+          setList(list);
+          setArr([...list.toArray()]);
+          await delayPromise(SHORT_DELAY_IN_MS);
+        }
       }
-      // Добавление элемента по индексу
-      list.addByIndex({ value: values.value, state: ElementStates.Modified }, indexNum);
+      // Удаление элемента по индексу
+      list.deleteByIndex(indexNum);
       setList(list);
-      setArr([...list.toArray()]);
       await delayPromise(SHORT_DELAY_IN_MS);
+      setArr([...list.toArray()]);
       // Возврат состояния элемента в Default
-      const arr = list.toArray().map((value) => ({
+      const defaultArray = list.toArray().map((value) => ({
         ...value,
         color: ElementStates.Default,
       })) as TString[];
       setList(list);
-      setArr([...arr]);
-      setHead("");
+      setArr([...defaultArray]);
+      setTail("");
       setCurrent("");
       setText("");
       setLoader(false);
-      setValues({ value: "" });
-      setIndex({ value: "" });
     }
-  };
- 
-  // Асинхронная функция для удаления элемента по индексу
-  const deleteIndexOnClick = async () => {
-    setLoader(true);
-    setCurrent("Удалить по индексу");
-    setText("Удалить по индексу");
-    for (let i = 0; i <= indexNum; i++) {
-      setIndex({ value: String(i) });
-      await delayPromise(SHORT_DELAY_IN_MS);
-      if (i < indexNum) {
-        await delayPromise(SHORT_DELAY_IN_MS);
-        list.toArray()[i].state = ElementStates.Changing;
-        setList(list);
-        setArr([...list.toArray()]);
-        await delayPromise(SHORT_DELAY_IN_MS);
-      }
-      if (i === indexNum) {
-        // Отображение изменений в tail перед удалением
-        setTail(
-          <Circle
-            letter={list.toArray()[indexNum].value}
-            state={ElementStates.Changing}
-            isSmall={true}
-          />
-        );
-        setList(list);
-        setArr([...list.toArray()]);
-        list.toArray()[indexNum].value = "";
-        setList(list);
-        setArr([...list.toArray()]);
-        await delayPromise(SHORT_DELAY_IN_MS);
-      }
-    }
-    // Удаление элемента по индексу
-    list.deleteByIndex(indexNum);
-    setList(list);
-    await delayPromise(SHORT_DELAY_IN_MS);
-    setArr([...list.toArray()]);
-    // Возврат состояния элемента в Default
-    const defaultArray = list.toArray().map((value) => ({
-      ...value,
-      color: ElementStates.Default,
-    })) as TString[];
-    setList(list);
-    setArr([...defaultArray]);
-    setTail("");
-    setCurrent("");
-    setText("");
-    setLoader(false);
   };
   
   // Отображение текста для head
@@ -330,11 +370,6 @@ export const ListPage: React.FC = () => {
       return "tail";
     }
   };
-  
-  // Обработчик формы
-  const onSubmit = async (evt: FormEvent<HTMLFormElement>) => {
-    evt.preventDefault();
-  }
 
   return (
     <SolutionLayout title="Связный список">

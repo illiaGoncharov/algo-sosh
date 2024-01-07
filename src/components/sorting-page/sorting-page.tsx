@@ -9,6 +9,7 @@ import { Direction } from "../../types/direction";
 import { ElementStates } from "../../types/element-states";
 import { DELAY_IN_MS } from "../../constants/delays";
 import { delayPromise, swap } from "../../utils/utils";
+import { useIsMounted } from "../../hooks/hooks";
 import styles from "./sorting-page.module.css"
 
 export const SortingPage: React.FC = () => {
@@ -17,85 +18,92 @@ export const SortingPage: React.FC = () => {
   const [loader, setLoader] = useState(false);
   const [arr, setArr] = useState<TArray[]>(randomArr());
   const [sorting, setSorting] = useState<Direction>();
+
+  // Хук для отслеживания состояния монтирования компонента
+  const isMounted = useIsMounted();
   
   // Функция сортировки выбором
   const sortChoice = async (arr: TArray[], sorting: Direction) => {
-    // Проход по всем элементам массива
-    for (let i = 0; i < arr.length; i++) {
-      let index = i;
-      // Проход по оставшимся элементам для выбора минимального/максимального
-      for (let n = i + 1; n < arr.length; n++) {
-        // Установка состояний элементов в "Changing" для анимации
-        arr[i].state = ElementStates.Changing;
-        arr[n].state = ElementStates.Changing;
-        setArr([...arr]);
-        await delayPromise(DELAY_IN_MS);
-        // Сравнение элементов в зависимости от направления сортировки
-        if (sorting === Direction.Ascending) {
-          if (arr[n].number < arr[index].number) {
-            // Обновление индекса минимального элемента
-            index = n;
-            // Анимация замены элементов в массиве
-            swap(arr, n, index);
-            setArr([...arr]);
+    if (isMounted.current) {
+      // Проход по всем элементам массива
+      for (let i = 0; i < arr.length; i++) {
+        let index = i;
+        // Проход по оставшимся элементам для выбора минимального/максимального
+        for (let n = i + 1; n < arr.length; n++) {
+          // Установка состояний элементов в "Changing" для анимации
+          arr[i].state = ElementStates.Changing;
+          arr[n].state = ElementStates.Changing;
+          setArr([...arr]);
+          await delayPromise(DELAY_IN_MS);
+          // Сравнение элементов в зависимости от направления сортировки
+          if (sorting === Direction.Ascending) {
+            if (arr[n].number < arr[index].number) {
+              // Обновление индекса минимального элемента
+              index = n;
+              // Анимация замены элементов в массиве
+              swap(arr, n, index);
+              setArr([...arr]);
+            }
           }
-        }
-        if (sorting === Direction.Descending) {
-          if (arr[n].number > arr[index].number) {
-            index = n;
-            swap(arr, n, index);
-            setArr([...arr]);
+          if (sorting === Direction.Descending) {
+            if (arr[n].number > arr[index].number) {
+              index = n;
+              swap(arr, n, index);
+              setArr([...arr]);
+            }
           }
+          // Возврат состояний элементов к значению "Default" после сравнения
+          arr[n].state = ElementStates.Default;
+          arr[i].state = ElementStates.Default;
+          setArr([...arr]);
         }
-        // Возврат состояний элементов к значению "Default" после сравнения
-        arr[n].state = ElementStates.Default;
-        arr[i].state = ElementStates.Default;
+        // Установка состояния "Modified" для отметки выбранного элемента
+        arr[index].state = ElementStates.Modified;
+        swap(arr, i, index);
         setArr([...arr]);
       }
-      // Установка состояния "Modified" для отметки выбранного элемента
-      arr[index].state = ElementStates.Modified;
-      swap(arr, i, index);
-      setArr([...arr]);
+      // Завершение анимации и снятие состояния "Loading"
+      setLoader(false);
     }
-    // Завершение анимации и снятие состояния "Loading"
-    setLoader(false);
   };
   
   // Функция сортировки пузырьком
   const sortBubble = async (arr: TArray[], sorting: Direction) => {
-    // Проход по всем элементам массива
-    for (let i = 0; i < arr.length; i++) {
-      // Проход по неотсортированным элементам, сравнение и анимация
-      for (let n = 0; n < arr.length - i - 1; n++) {
-        arr[n].state = ElementStates.Changing;
-        arr[n + 1].state = ElementStates.Changing;
-        setArr([...arr]);
-        await delayPromise(DELAY_IN_MS);
-        // Сравнение элементов в зависимости от направления сортировки
-        if (sorting === Direction.Ascending) {
-          if (arr[n].number > arr[n + 1].number) {
-            // Анимация замены элементов в массиве
-            swap(arr, n, n + 1);
+    if (isMounted.current) {
+      // Проход по всем элементам массива
+      for (let i = 0; i < arr.length; i++) {
+        // Проход по неотсортированным элементам, сравнение и анимация
+        for (let n = 0; n < arr.length - i - 1; n++) {
+          arr[n].state = ElementStates.Changing;
+          arr[n + 1].state = ElementStates.Changing;
+          setArr([...arr]);
+          await delayPromise(DELAY_IN_MS);
+          // Сравнение элементов в зависимости от направления сортировки
+          if (sorting === Direction.Ascending) {
+            if (arr[n].number > arr[n + 1].number) {
+              // Анимация замены элементов в массиве
+              swap(arr, n, n + 1);
+            }
           }
-        }
-        if (sorting === Direction.Descending) {
-          if (arr[n].number < arr[n + 1].number) {
-            swap(arr, n, n + 1);
+          if (sorting === Direction.Descending) {
+            if (arr[n].number < arr[n + 1].number) {
+              swap(arr, n, n + 1);
+            }
           }
+          // Возврат состояний элементов к значению "Default" после сравнения
+          arr[n].state = ElementStates.Default;
+          arr[n + 1].state = ElementStates.Default;
+          setArr([...arr]);
         }
-        // Возврат состояний элементов к значению "Default" после сравнения
-        arr[n].state = ElementStates.Default;
-        arr[n + 1].state = ElementStates.Default;
+        // Установка состояния "Modified" для отметки последнего элемента в отсортированной части
+        const length = arr.length;
+        arr[length - i - 1].state = ElementStates.Modified;
         setArr([...arr]);
       }
-      // Установка состояния "Modified" для отметки последнего элемента в отсортированной части
-      const length = arr.length;
-      arr[length - i - 1].state = ElementStates.Modified;
+      // Сброс анимации и состояния "Loading" 
       setArr([...arr]);
+      setLoader(false);
     }
-    // Сброс анимации и состояния "Loading" 
-    setArr([...arr]);
-    setLoader(false);
   };
 
   // Обработчик изменения выбранного метода сортировки
