@@ -45,6 +45,7 @@ exports[`button component tests renders loading button correctly 1`] = `
   <img
     alt="Загрузка."
     className="loader_icon"
+    src="loader.svg"
   />
 </button>
 `;
